@@ -9,6 +9,7 @@ import {
   PlayerUpdate,
   UnitUpdate,
 } from "./GameUpdates";
+import { PlayerStats, Stats } from "./Stats";
 
 export type PlayerID = string;
 export type Tick = number;
@@ -79,6 +80,11 @@ export enum UnitType {
   MIRVWarhead = "MIRV Warhead",
   Construction = "Construction",
 }
+export type NukeType =
+  | UnitType.AtomBomb
+  | UnitType.HydrogenBomb
+  | UnitType.MIRVWarhead
+  | UnitType.MIRV;
 
 export enum Relation {
   Hostile = 0,
@@ -379,6 +385,8 @@ export interface Game extends GameMap {
   nations(): Nation[];
 
   numTilesWithFallout(): number;
+  // Optional as it's not initialized before the end of spawn phase
+  stats(): Stats;
 }
 
 export interface PlayerActions {
@@ -408,6 +416,7 @@ export interface PlayerInteraction {
   canTarget: boolean;
   canDonate: boolean;
   canEmbargo: boolean;
+  stats: PlayerStats;
 }
 
 export interface EmojiMessage {

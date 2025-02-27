@@ -30,7 +30,8 @@ import { UnitImpl } from "./UnitImpl";
 import { consolex } from "../Consolex";
 import { GameMap, GameMapImpl, TileRef, TileUpdate } from "./GameMap";
 import { DefenseGrid } from "./DefensePostGrid";
-import { simpleHash } from "../Util";
+import { StatsImpl } from "./StatsImpl";
+import { Stats } from "./Stats";
 
 export function createGame(
   gameMap: GameMap,
@@ -66,6 +67,8 @@ export class GameImpl implements Game {
 
   private updates: GameUpdates = createGameUpdatesMap();
   private defenseGrid: DefenseGrid;
+
+  private _stats: StatsImpl = new StatsImpl();
 
   constructor(
     private _map: GameMap,
@@ -638,6 +641,9 @@ export class GameImpl implements Game {
   }
   numTilesWithFallout(): number {
     return this._map.numTilesWithFallout();
+  }
+  stats(): Stats {
+    return this._stats;
   }
 }
 
