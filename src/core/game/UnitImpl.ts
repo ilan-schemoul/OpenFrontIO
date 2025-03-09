@@ -1,4 +1,4 @@
-import { MessageType } from "./Game";
+import { Cell, MessageType } from "./Game";
 import { UnitUpdate } from "./GameUpdates";
 import { GameUpdateType } from "./GameUpdates";
 import { simpleHash, toInt, within, withinInt } from "../Util";
@@ -13,6 +13,7 @@ export class UnitImpl implements Unit {
   private _lastTile: TileRef = null;
   // Currently only warship use it
   private _target: Unit = null;
+  private _moveTarget: Cell = null;
 
   private _constructionType: UnitType = undefined;
 
@@ -163,5 +164,13 @@ export class UnitImpl implements Unit {
 
   target() {
     return this._target;
+  }
+
+  setMoveTarget(moveTarget: Cell) {
+    this._moveTarget = moveTarget;
+  }
+
+  moveTarget() {
+    return this._moveTarget;
   }
 }

@@ -222,6 +222,9 @@ export interface Unit {
   setTarget(target: Unit): void;
   target(): Unit;
 
+  setMoveTarget(cell: Cell): void;
+  moveTarget(): Cell;
+
   // Mutations
   setTroops(troops: number): void;
   delete(displayerMessage?: boolean): void;
