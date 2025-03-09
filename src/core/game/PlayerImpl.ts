@@ -158,6 +158,7 @@ export class PlayerImpl implements Player {
           }) as AttackUpdate,
       ),
       outgoingAllianceRequests: outgoingAllianceRequests,
+      stats: this.mg.stats().getPlayerStats(this.id()),
     };
   }
 
@@ -674,6 +675,9 @@ export class PlayerImpl implements Player {
     }
     switch (unitType) {
       case UnitType.MIRV:
+        if (!this.mg.hasOwner(targetTile)) {
+          return false;
+        }
         return this.nukeSpawn(targetTile);
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
@@ -727,17 +731,11 @@ export class PlayerImpl implements Player {
     if (!this.mg.isOcean(tile)) {
       return false;
     }
-    const spawns = this.units(UnitType.Port)
-      .filter(
-        (u) =>
-          this.mg.manhattanDist(u.tile(), tile) <
-          this.mg.config().boatMaxDistance(),
-      )
-      .sort(
-        (a, b) =>
-          this.mg.manhattanDist(a.tile(), tile) -
-          this.mg.manhattanDist(b.tile(), tile),
-      );
+    const spawns = this.units(UnitType.Port).sort(
+      (a, b) =>
+        this.mg.manhattanDist(a.tile(), tile) -
+        this.mg.manhattanDist(b.tile(), tile),
+    );
     if (spawns.length == 0) {
       return false;
     }

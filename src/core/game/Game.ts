@@ -1,7 +1,7 @@
 import { Config } from "../configuration/Config";
 import { GameEvent } from "../EventBus";
 import { PlayerView } from "./GameView";
-import { ClientID, GameConfig, GameID } from "../Schemas";
+import { ClientID, GameConfig, GameID, AllPlayersStats } from "../Schemas";
 import { GameMap, GameMapImpl, TileRef } from "./GameMap";
 import {
   GameUpdate,
@@ -9,7 +9,7 @@ import {
   PlayerUpdate,
   UnitUpdate,
 } from "./GameUpdates";
-import { PlayerStats, Stats } from "./Stats";
+import { Stats } from "./Stats";
 
 export type PlayerID = string;
 export type Tick = number;
@@ -43,11 +43,13 @@ export enum GameMapType {
   Europe = "Europe",
   Mena = "Mena",
   NorthAmerica = "North America",
+  SouthAmerica = "South America",
   Oceania = "Oceania",
   BlackSea = "Black Sea",
   Africa = "Africa",
   Asia = "Asia",
   Mars = "Mars",
+  Britannia = "Britannia",
 }
 
 export enum GameType {
@@ -198,6 +200,8 @@ export class PlayerInfo {
 }
 
 export interface Unit {
+  id(): number;
+
   // Properties
   type(): UnitType;
   troops(): number;
@@ -214,6 +218,9 @@ export interface Unit {
   hasHealth(): boolean;
   health(): number;
   modifyHealth(delta: number): void;
+  // State for warships (currently)
+  setTarget(target: Unit): void;
+  target(): Unit;
 
   // Mutations
   setTroops(troops: number): void;
@@ -373,7 +380,7 @@ export interface Game extends GameMap {
   ticks(): Tick;
   inSpawnPhase(): boolean;
   executeNextTick(): GameUpdates;
-  setWinner(winner: Player): void;
+  setWinner(winner: Player, allPlayersStats: AllPlayersStats): void;
   config(): Config;
 
   // Units
@@ -423,7 +430,6 @@ export interface PlayerInteraction {
   canTarget: boolean;
   canDonate: boolean;
   canEmbargo: boolean;
-  stats: PlayerStats;
 }
 
 export interface EmojiMessage {

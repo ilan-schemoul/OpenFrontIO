@@ -11,6 +11,8 @@ export class UnitImpl implements Unit {
   private _active = true;
   private _health: bigint;
   private _lastTile: TileRef = null;
+  // Currently only warship use it
+  private _target: Unit = null;
 
   private _constructionType: UnitType = undefined;
 
@@ -23,9 +25,12 @@ export class UnitImpl implements Unit {
     public _owner: PlayerImpl,
     private _dstPort?: Unit,
   ) {
-    // default to 60% health (or 1.2 is no health specified)
-    this._health = toInt((this.mg.unitInfo(_type).maxHealth ?? 2) * 0.6);
+    this._health = toInt(this.mg.unitInfo(_type).maxHealth ?? 1);
     this._lastTile = _tile;
+  }
+
+  id() {
+    return this._id;
   }
 
   toUpdate(): UnitUpdate {
@@ -40,6 +45,7 @@ export class UnitImpl implements Unit {
       lastPos: this._lastTile,
       health: this.hasHealth() ? Number(this._health) : undefined,
       constructionType: this._constructionType,
+      targetId: this.target() ? this.target().id() : null,
     };
   }
 
@@ -149,5 +155,13 @@ export class UnitImpl implements Unit {
 
   dstPort(): Unit {
     return this._dstPort;
+  }
+
+  setTarget(target: Unit) {
+    this._target = target;
+  }
+
+  target() {
+    return this._target;
   }
 }

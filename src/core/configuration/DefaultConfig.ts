@@ -22,9 +22,13 @@ import { pastelTheme } from "./PastelTheme";
 import { pastelThemeDark } from "./PastelThemeDark";
 
 export abstract class DefaultServerConfig implements ServerConfig {
-  numWorkers(): number {
-    return 2;
+  adminHeader(): string {
+    return "x-admin-key";
   }
+  adminToken(): string {
+    return process.env.ADMIN_TOKEN;
+  }
+  abstract numWorkers(): number;
   abstract env(): GameEnv;
   abstract discordRedirectURI(): string;
   turnIntervalMs(): number {
@@ -32,9 +36,9 @@ export abstract class DefaultServerConfig implements ServerConfig {
   }
   gameCreationRate(highTraffic: boolean): number {
     if (highTraffic) {
-      return 30 * 1000;
+      return 20 * 1000;
     } else {
-      return 60 * 1000;
+      return 50 * 1000;
     }
   }
   lobbyLifetime(highTraffic: boolean): number {
@@ -123,7 +127,7 @@ export class DefaultConfig implements Config {
     return this._gameConfig.infiniteTroops;
   }
   tradeShipGold(dist: number): Gold {
-    return 10000 + 100 * Math.pow(dist, 1.1);
+    return 10000 + 150 * Math.pow(dist, 1.1);
   }
   tradeShipSpawnRate(): number {
     return 500;
@@ -141,8 +145,11 @@ export class DefaultConfig implements Config {
           cost: (p: Player) =>
             p.type() == PlayerType.Human && this.infiniteGold()
               ? 0
-              : (p.unitsIncludingConstruction(UnitType.Warship).length + 1) *
-                250_000,
+              : Math.min(
+                  1_000_000,
+                  (p.unitsIncludingConstruction(UnitType.Warship).length + 1) *
+                    250_000,
+                ),
           territoryBound: false,
           maxHealth: 1000,
         };
@@ -184,7 +191,7 @@ export class DefaultConfig implements Config {
           cost: (p: Player) =>
             p.type() == PlayerType.Human && this.infiniteGold()
               ? 0
-              : 25_000_000,
+              : 15_000_000,
           territoryBound: false,
         };
       case UnitType.MIRVWarhead:
@@ -264,16 +271,13 @@ export class DefaultConfig implements Config {
     return 30 * 10;
   }
   allianceDuration(): Tick {
-    return 240 * 10; // 4 minutes
+    return 600 * 10; // 10 minutes.
   }
   percentageTilesOwnedToWin(): number {
     return 80;
   }
   boatMaxNumber(): number {
     return 3;
-  }
-  boatMaxDistance(): number {
-    return 500;
   }
   numSpawnPhaseTurns(): number {
     return this._gameConfig.gameType == GameType.Singleplayer ? 100 : 300;
@@ -427,7 +431,7 @@ export class DefaultConfig implements Config {
   }
 
   maxPopulation(player: Player | PlayerView): number {
-    let maxPop =
+    const maxPop =
       player.type() == PlayerType.Human && this.infiniteTroops()
         ? 1_000_000_000
         : 2 * (Math.pow(player.numTilesOwned(), 0.6) * 1000 + 50000) +
@@ -454,7 +458,7 @@ export class DefaultConfig implements Config {
   }
 
   populationIncreaseRate(player: Player): number {
-    let max = this.maxPopulation(player);
+    const max = this.maxPopulation(player);
 
     let toAdd = 10 + Math.pow(player.population(), 0.73) / 4;
 

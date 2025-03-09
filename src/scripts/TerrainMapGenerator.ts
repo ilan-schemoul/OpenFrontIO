@@ -17,6 +17,7 @@ const maps = [
   "Mena",
   "Oceania",
   "NorthAmerica",
+  "SouthAmerica",
 ];
 const min_island_size = 30;
 
@@ -332,8 +333,8 @@ function getArea(
   visited: Set<string>,
   targetType: TerrainType,
 ) {
-  let area = [];
-  let next = [[x, y]];
+  const area = [];
+  const next = [[x, y]];
   while (next.length) {
     const [x, y] = next.pop();
     const key = `${x},${y}`;
@@ -385,7 +386,7 @@ function removeSmallIslands(map: Terrain[][]) {
 
 function removeSmallLakes(mapName: string, map: Terrain[][]) {
   const visited = new Set<string>();
-  const min_lake_size = 30; // Using same size threshold as islands
+  const min_lake_size = 200;
 
   console.log(
     `${mapName}: removing small lakes ${map.length}, ${map[0].length}`,

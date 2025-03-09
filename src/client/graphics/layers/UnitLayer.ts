@@ -1,4 +1,4 @@
-import { Colord } from "colord";
+import { colord, Colord } from "colord";
 import { Theme } from "../../../core/configuration/Config";
 import { Unit, UnitType, Player } from "../../../core/game/Game";
 import { Layer } from "./Layer";
@@ -235,7 +235,7 @@ export class UnitLayer implements Layer {
     // Clear previous area
     for (const t of this.game.bfs(
       unit.lastTile(),
-      euclDistFN(unit.lastTile(), 6),
+      euclDistFN(unit.lastTile(), 6, false),
     )) {
       this.clearCell(this.game.x(t), this.game.y(t));
     }
@@ -244,15 +244,23 @@ export class UnitLayer implements Layer {
       return;
     }
 
+    let outerColor = this.theme.territoryColor(unit.owner().info());
+    if (unit.targetId()) {
+      const targetOwner = this.game
+        .units()
+        .find((u) => u.id() == unit.targetId())
+        ?.owner();
+      if (targetOwner == this.myPlayer) {
+        outerColor = colord({ r: 200, b: 0, g: 0 });
+      }
+    }
+
     // Paint outer territory
-    for (const t of this.game.bfs(unit.tile(), euclDistFN(unit.tile(), 5))) {
-      this.paintCell(
-        this.game.x(t),
-        this.game.y(t),
-        rel,
-        this.theme.territoryColor(unit.owner().info()),
-        255,
-      );
+    for (const t of this.game.bfs(
+      unit.tile(),
+      euclDistFN(unit.tile(), 5, false),
+    )) {
+      this.paintCell(this.game.x(t), this.game.y(t), rel, outerColor, 255);
     }
 
     // Paint border
@@ -270,7 +278,10 @@ export class UnitLayer implements Layer {
     }
 
     // Paint inner territory
-    for (const t of this.game.bfs(unit.tile(), euclDistFN(unit.tile(), 1))) {
+    for (const t of this.game.bfs(
+      unit.tile(),
+      euclDistFN(unit.tile(), 1, false),
+    )) {
       this.paintCell(
         this.game.x(t),
         this.game.y(t),
@@ -331,7 +342,7 @@ export class UnitLayer implements Layer {
     // Clear previous area
     for (const t of this.game.bfs(
       unit.lastTile(),
-      euclDistFN(unit.lastTile(), range),
+      euclDistFN(unit.lastTile(), range, false),
     )) {
       this.clearCell(this.game.x(t), this.game.y(t));
     }
@@ -339,7 +350,7 @@ export class UnitLayer implements Layer {
     if (unit.isActive()) {
       for (const t of this.game.bfs(
         unit.tile(),
-        euclDistFN(unit.tile(), range),
+        euclDistFN(unit.tile(), range, false),
       )) {
         this.paintCell(
           this.game.x(t),
@@ -349,7 +360,10 @@ export class UnitLayer implements Layer {
           255,
         );
       }
-      for (const t of this.game.bfs(unit.tile(), euclDistFN(unit.tile(), 2))) {
+      for (const t of this.game.bfs(
+        unit.tile(),
+        euclDistFN(unit.tile(), 2, false),
+      )) {
         this.paintCell(
           this.game.x(t),
           this.game.y(t),
@@ -384,7 +398,7 @@ export class UnitLayer implements Layer {
     // Clear previous area
     for (const t of this.game.bfs(
       unit.lastTile(),
-      euclDistFN(unit.lastTile(), 3),
+      euclDistFN(unit.lastTile(), 3, false),
     )) {
       this.clearCell(this.game.x(t), this.game.y(t));
     }

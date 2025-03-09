@@ -3,10 +3,10 @@ import { Theme } from "../../../core/configuration/Config";
 import { Layer } from "./Layer";
 import { EventBus } from "../../../core/EventBus";
 
-import anchorIcon from "../../../../resources/images/AnchorIcon.png";
-import missileSiloIcon from "../../../../resources/images/MissileSiloUnit.png";
-import shieldIcon from "../../../../resources/images/ShieldIcon.png";
-import cityIcon from "../../../../resources/images/CityIcon.png";
+import anchorIcon from "../../../../resources/images/buildings/port1.png";
+import missileSiloIcon from "../../../../resources/images/buildings/silo1.png";
+import shieldIcon from "../../../../resources/images/buildings/fortAlt2.png";
+import cityIcon from "../../../../resources/images/buildings/cityAlt1.png";
 import { GameView, UnitView } from "../../../core/game/GameView";
 import { Cell, UnitType } from "../../../core/game/Game";
 import { GameUpdateType } from "../../../core/game/GameUpdates";
@@ -30,8 +30,13 @@ export class StructureLayer implements Layer {
   private readonly unitConfigs: Partial<Record<UnitType, UnitRenderConfig>> = {
     [UnitType.Port]: {
       icon: anchorIcon,
-      borderRadius: 8,
-      territoryRadius: 6,
+      borderRadius: 8.525,
+      territoryRadius: 6.525,
+    },
+    [UnitType.City]: {
+      icon: cityIcon,
+      borderRadius: 8.525,
+      territoryRadius: 6.525,
     },
     [UnitType.MissileSilo]: {
       icon: missileSiloIcon,
@@ -40,11 +45,6 @@ export class StructureLayer implements Layer {
     },
     [UnitType.DefensePost]: {
       icon: shieldIcon,
-      borderRadius: 8,
-      territoryRadius: 6,
-    },
-    [UnitType.City]: {
-      icon: cityIcon,
       borderRadius: 8,
       territoryRadius: 6,
     },
@@ -136,7 +136,7 @@ export class StructureLayer implements Layer {
     // Clear previous rendering
     for (const tile of this.game.bfs(
       unit.tile(),
-      euclDistFN(unit.tile(), config.borderRadius),
+      euclDistFN(unit.tile(), config.borderRadius, true),
     )) {
       this.clearCell(new Cell(this.game.x(tile), this.game.y(tile)));
     }
@@ -148,7 +148,7 @@ export class StructureLayer implements Layer {
     // Draw border and territory
     for (const tile of this.game.bfs(
       unit.tile(),
-      euclDistFN(unit.tile(), config.borderRadius),
+      euclDistFN(unit.tile(), config.borderRadius, true),
     )) {
       this.paintCell(
         new Cell(this.game.x(tile), this.game.y(tile)),
@@ -161,7 +161,7 @@ export class StructureLayer implements Layer {
 
     for (const tile of this.game.bfs(
       unit.tile(),
-      euclDistFN(unit.tile(), config.territoryRadius),
+      euclDistFN(unit.tile(), config.territoryRadius, true),
     )) {
       this.paintCell(
         new Cell(this.game.x(tile), this.game.y(tile)),

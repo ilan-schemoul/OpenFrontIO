@@ -3,7 +3,7 @@ import { customElement, state } from "lit/decorators.js";
 import { Difficulty, GameMapType, GameType } from "../core/game/Game";
 import { consolex } from "../core/Consolex";
 import { getMapsImage } from "./utilities/Maps";
-import { GameInfo } from "../core/Schemas";
+import { GameID, GameInfo } from "../core/Schemas";
 
 @customElement("public-lobby")
 export class PublicLobby extends LitElement {
@@ -13,6 +13,7 @@ export class PublicLobby extends LitElement {
   private lobbiesInterval: number | null = null;
   private currLobby: GameInfo = null;
   private debounceDelay: number = 750;
+  private lobbyIDToStart = new Map<GameID, number>();
 
   createRenderRoot() {
     return this;
@@ -37,8 +38,14 @@ export class PublicLobby extends LitElement {
 
   private async fetchAndUpdateLobbies(): Promise<void> {
     try {
-      const lobbies = await this.fetchLobbies();
-      this.lobbies = lobbies;
+      this.lobbies = await this.fetchLobbies();
+      this.lobbies.forEach((l) => {
+        // Store the start time on first fetch because endpoint is cached, causing
+        // the time to appear irregular.
+        if (!this.lobbyIDToStart.has(l.gameID)) {
+          this.lobbyIDToStart.set(l.gameID, l.msUntilStart + Date.now());
+        }
+      });
     } catch (error) {
       consolex.error("Error fetching lobbies:", error);
     }
@@ -46,7 +53,7 @@ export class PublicLobby extends LitElement {
 
   async fetchLobbies(): Promise<GameInfo[]> {
     try {
-      const response = await fetch(`/public_lobbies`);
+      const response = await fetch(`/api/public_lobbies`);
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
@@ -72,7 +79,10 @@ export class PublicLobby extends LitElement {
     if (!lobby?.gameConfig) {
       return;
     }
-    const timeRemaining = Math.max(0, Math.floor(lobby.msUntilStart / 1000));
+    const timeRemaining = Math.max(
+      0,
+      Math.floor((this.lobbyIDToStart.get(lobby.gameID) - Date.now()) / 1000),
+    );
 
     // Format time to show minutes and seconds
     const minutes = Math.floor(timeRemaining / 60);
