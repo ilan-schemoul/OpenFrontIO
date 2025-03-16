@@ -23,10 +23,8 @@ export class SAMMissileExecution implements Execution {
     private target: Unit,
     private mg: Game,
     private pseudoRandom: number,
-    private speed: number = 6,
-    // Regular atom bomb or warhead of MIRV
-    private hittingChance: number = 0.75,
-    private hittingChanceHydrogen: number = 0.1,
+    private speed: number = 12,
+    private hittingChance: number = 1,
   ) {}
 
   init(mg: Game, ticks: number): void {
@@ -63,24 +61,22 @@ export class SAMMissileExecution implements Execution {
       switch (result.type) {
         case PathFindResultType.Completed:
           this.active = false;
-          let hit = false;
-          if (
-            this.target.type() == UnitType.HydrogenBomb &&
-            this.pseudoRandom < this.hittingChanceHydrogen
-          ) {
-            hit = true;
-          } else if (this.pseudoRandom < this.hittingChance) {
-            hit = true;
-          }
+          if (this.pseudoRandom < this.hittingChance) {
+            this.target.modifyHealth(-1);
 
-          if (hit) {
-            this.target.delete();
-
-            this.mg.displayMessage(
-              `Missile succesfully intercepted ${this.target.type()}`,
-              MessageType.SUCCESS,
-              this._owner.id(),
-            );
+            if (this.target.health() == 0) {
+              this.mg.displayMessage(
+                `Missile succesfully intercepted ${this.target.type()}`,
+                MessageType.SUCCESS,
+                this._owner.id(),
+              );
+            } else {
+              this.mg.displayMessage(
+                `Missile hit ${this.target.type()}. It needs ${this.target.health()} more hit !`,
+                MessageType.SUCCESS,
+                this._owner.id(),
+              );
+            }
           } else {
             this.mg.displayMessage(
               `Missile failed to intercept ${this.target.type()}`,

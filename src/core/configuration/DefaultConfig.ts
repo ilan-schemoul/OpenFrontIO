@@ -219,6 +219,8 @@ export class DefaultConfig implements Config {
           cost: (p: Player) =>
             p.type() == PlayerType.Human && this.infiniteGold() ? 0 : 5_000_000,
           territoryBound: false,
+          // Takes two hit from SAM to die
+          maxHealth: 2,
         };
       case UnitType.MIRV:
         return {
@@ -265,10 +267,10 @@ export class DefaultConfig implements Config {
             p.type() == PlayerType.Human && this.infiniteGold()
               ? 0
               : Math.min(
-                  1_500_000 * 3,
+                  1_250_000 * 3,
                   (p.unitsIncludingConstruction(UnitType.SAMLauncher).length +
                     1) *
-                    1_500_000,
+                    1_250_000,
                 ),
           territoryBound: true,
           constructionDuration: this.instantBuild() ? 0 : 30 * 10,

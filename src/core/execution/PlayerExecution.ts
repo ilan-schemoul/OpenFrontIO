@@ -47,7 +47,9 @@ export class PlayerExecution implements Execution {
         u.delete();
         return;
       }
-      u.modifyHealth(1);
+      if (u.type() != UnitType.HydrogenBomb) {
+        u.modifyHealth(1);
+      }
       const tileOwner = this.mg.owner(u.tile());
       if (u.info().territoryBound) {
         if (tileOwner.isPlayer()) {

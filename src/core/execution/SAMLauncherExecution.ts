@@ -20,9 +20,9 @@ export class SAMLauncherExecution implements Execution {
 
   private target: Unit = null;
 
-  private searchRange = 100;
+  private searchRange = 80;
 
-  private missileAttackRate = 100; // 10 seconds
+  private missileAttackRate = 75; // 7.5 seconds
   private lastMissileAttack = 0;
 
   private pseudoRandom: PseudoRandom;
