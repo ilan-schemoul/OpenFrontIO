@@ -27,7 +27,7 @@ export class NukeExecution implements Execution {
     private senderID: PlayerID,
     private dst: TileRef,
     private src?: TileRef,
-    private speed: number = 4,
+    private speed: number = -1,
     private waitTicks = 0,
   ) {}
 
@@ -41,6 +41,9 @@ export class NukeExecution implements Execution {
     this.mg = mg;
     this.player = mg.player(this.senderID);
     this.random = new PseudoRandom(ticks);
+    if (this.speed == -1) {
+      this.speed = this.mg.config().defaultNukeSpeed();
+    }
   }
 
   public target(): Player | TerraNullius {
@@ -83,6 +86,7 @@ export class NukeExecution implements Execution {
             this.nuke.type() as NukeType,
           );
       }
+      return;
     }
 
     // make the nuke unactive if it was intercepted
@@ -141,19 +145,7 @@ export class NukeExecution implements Execution {
   }
 
   private detonate() {
-    let magnitude;
-    switch (this.type) {
-      case UnitType.MIRVWarhead:
-        magnitude = { inner: 25, outer: 30 };
-        break;
-      case UnitType.AtomBomb:
-        magnitude = { inner: 12, outer: 30 };
-        break;
-      case UnitType.HydrogenBomb:
-        magnitude = { inner: 80, outer: 100 };
-        break;
-    }
-
+    const magnitude = this.mg.config().nukeMagnitudes(this.type);
     const rand = new PseudoRandom(this.mg.ticks());
     const toDestroy = this.mg.bfs(this.dst, (_, n: TileRef) => {
       const d = this.mg.euclideanDist(this.dst, n);
@@ -166,7 +158,22 @@ export class NukeExecution implements Execution {
       if (owner.isPlayer()) {
         const mp = this.mg.player(owner.id());
         mp.relinquish(tile);
-        mp.removeTroops((5 * mp.population()) / mp.numTilesOwned());
+        mp.removeTroops(
+          this.mg.config().nukeDeathFactor(mp.population(), mp.numTilesOwned()),
+        );
+        mp.outgoingAttacks().forEach((attack) => {
+          const deaths = this.mg
+            .config()
+            .nukeDeathFactor(attack.troops(), mp.numTilesOwned());
+          attack.setTroops(attack.troops() - deaths);
+        });
+        mp.units(UnitType.TransportShip).forEach((attack) => {
+          const deaths = this.mg
+            .config()
+            .nukeDeathFactor(attack.troops(), mp.numTilesOwned());
+          attack.setTroops(attack.troops() - deaths);
+        });
+
         if (!attacked.has(mp)) {
           attacked.set(mp, 0);
         }
