@@ -50,6 +50,46 @@ export class NukeExecution implements Execution {
     return this.mg.owner(this.dst);
   }
 
+  private tilesToDestroy(): Set<TileRef> {
+    const magnitude = this.mg.config().nukeMagnitudes(this.nuke.type());
+    const rand = new PseudoRandom(this.mg.ticks());
+    return this.mg.bfs(this.dst, (_, n: TileRef) => {
+      const d = this.mg.euclideanDist(this.dst, n);
+      return (d <= magnitude.inner || rand.chance(2)) && d <= magnitude.outer;
+    });
+  }
+
+  private getAttackedTiles() {
+    const toDestroy = this.tilesToDestroy();
+
+    const attacked = new Map<Player, number>();
+    for (const tile of toDestroy) {
+      const owner = this.mg.owner(tile);
+      if (owner.isPlayer()) {
+        const mp = this.mg.player(owner.id());
+        const prev = attacked.get(mp) ?? 0;
+        attacked.set(mp, prev + 1);
+      }
+    }
+
+    return attacked;
+  }
+
+  private breakAlliances() {
+    for (const [other, tilesDestroyed] of this.getAttackedTiles()) {
+      if (tilesDestroyed > 100 && this.nuke.type() != UnitType.MIRVWarhead) {
+        // Mirv warheads shouldn't break alliances
+        const alliance = this.player.allianceWith(other);
+        if (alliance != null) {
+          this.player.breakAlliance(alliance);
+        }
+        if (other != this.player) {
+          other.updateRelation(this.player, -100);
+        }
+      }
+    }
+  }
+
   tick(ticks: number): void {
     if (this.nuke == null) {
       const spawn = this.src ?? this.player.canBuild(this.type, this.dst);
@@ -95,6 +135,8 @@ export class NukeExecution implements Execution {
       this.active = false;
       return;
     }
+
+    this.breakAlliances();
 
     if (this.waitTicks > 0) {
       this.waitTicks--;
@@ -145,21 +187,19 @@ export class NukeExecution implements Execution {
   }
 
   private detonate() {
-    const magnitude = this.mg.config().nukeMagnitudes(this.type);
-    const rand = new PseudoRandom(this.mg.ticks());
-    const toDestroy = this.mg.bfs(this.dst, (_, n: TileRef) => {
-      const d = this.mg.euclideanDist(this.dst, n);
-      return (d <= magnitude.inner || rand.chance(2)) && d <= magnitude.outer;
-    });
+    const magnitude = this.mg.config().nukeMagnitudes(this.nuke.type());
+    const toDestroy = this.tilesToDestroy();
 
-    const attacked = new Map<Player, number>();
     for (const tile of toDestroy) {
       const owner = this.mg.owner(tile);
       if (owner.isPlayer()) {
         const mp = this.mg.player(owner.id());
         mp.relinquish(tile);
         mp.removeTroops(
-          this.mg.config().nukeDeathFactor(mp.population(), mp.numTilesOwned()),
+          this.mg.config().nukeDeathFactor(mp.troops(), mp.numTilesOwned()),
+        );
+        mp.removeWorkers(
+          this.mg.config().nukeDeathFactor(mp.workers(), mp.numTilesOwned()),
         );
         mp.outgoingAttacks().forEach((attack) => {
           const deaths = this.mg
@@ -173,28 +213,10 @@ export class NukeExecution implements Execution {
             .nukeDeathFactor(attack.troops(), mp.numTilesOwned());
           attack.setTroops(attack.troops() - deaths);
         });
-
-        if (!attacked.has(mp)) {
-          attacked.set(mp, 0);
-        }
-        const prev = attacked.get(mp);
-        attacked.set(mp, prev + 1);
       }
 
       if (this.mg.isLand(tile)) {
         this.mg.setFallout(tile, true);
-      }
-    }
-    for (const [other, tilesDestroyed] of attacked) {
-      if (tilesDestroyed > 100 && this.nuke.type() != UnitType.MIRVWarhead) {
-        // Mirv warheads shouldn't break alliances
-        const alliance = this.player.allianceWith(other);
-        if (alliance != null) {
-          this.player.breakAlliance(alliance);
-        }
-        if (other != this.player) {
-          other.updateRelation(this.player, -100);
-        }
       }
     }
 
